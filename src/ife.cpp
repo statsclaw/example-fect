@@ -312,6 +312,7 @@ List inter_fe_ub(
   int use_weight;
   arma::mat WI;
   int burn_in = 0;
+  int converged = 1; // default: assume converged
 
   if (Y.n_rows == W.n_rows && Y.n_cols == W.n_cols) {
     use_weight = 1;
@@ -383,10 +384,14 @@ List inter_fe_ub(
         xi = as<arma::mat>(fe_ad_inter["xi"]);
       }
       niter = as<int>(fe_ad_inter["niter"]);
+      if (fe_ad_inter.containsElementNamed("converged")) {
+        converged = as<int>(fe_ad_inter["converged"]);
+      }
     } else {
       if (force == 0) {
         U = YY;
         fit.fill(mu);
+        converged = 1; // trivial case always converges
       } else {
         // add fe; iteration
         List fe_ad = fe_ad_iter(YY, Y0, I, W, force, tol, max_iter);
@@ -400,6 +405,9 @@ List inter_fe_ub(
           xi = as<arma::mat>(fe_ad["xi"]);
         }
         niter = as<int>(fe_ad["niter"]);
+        if (fe_ad.containsElementNamed("converged")) {
+          converged = as<int>(fe_ad["converged"]);
+        }
       }
     }
   } else {
@@ -425,6 +433,9 @@ List inter_fe_ub(
         xi = as<arma::mat>(fe_ad["xi"]);
       }
       niter = as<int>(fe_ad["niter"]);
+      if (fe_ad.containsElementNamed("converged")) {
+        converged = as<int>(fe_ad["converged"]);
+      }
     } else if (r > 0) {
       // add, covar, interactive, iteration
       List fe_ad_inter_covar = fe_ad_inter_covar_iter(
@@ -447,6 +458,9 @@ List inter_fe_ub(
         xi = as<arma::mat>(fe_ad_inter_covar["xi"]);
       }
       niter = as<int>(fe_ad_inter_covar["niter"]);
+      if (fe_ad_inter_covar.containsElementNamed("converged")) {
+        converged = as<int>(fe_ad_inter_covar["converged"]);
+      }
     }
   }
   /* sigma2 and IC */
@@ -530,5 +544,6 @@ List inter_fe_ub(
   output["IC"] = IC;
   output["PC"] = PC;
   output["validX"] = validX;
+  output["converged"] = converged;
   return (output);
 }
