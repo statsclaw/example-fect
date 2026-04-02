@@ -23,6 +23,12 @@ factor models, and the matrix completion method.
 Starting from v.2.0.0, all **gsynth** functionalities have been merged
 into **fect**.
 
+### EM Convergence Improvement (v2.2.0)
+
+![Convergence Fix](figures/fect-convergence.png)
+
+*Component-wise convergence monitoring improves accuracy by 43–2,249× without speed regression. Fully backward-compatible at default settings.*
+
 **Source Code:** [GitHub](https://github.com/xuyiqing/fect)
 
 **User Manual:** [Quarto Book](https://yiqingxu.org/packages/fect/)
