@@ -2,6 +2,7 @@
 ## Reproduce the democracy effect figure from the paper
 ## Data: hh2019 (shipped with fect package)
 ## Reference: Hainmueller & Hangartner (2019), AJPS 63(3):530-547
+## Method: Two-way FE (most parsimonious; tightest CIs)
 
 library(fect)
 
@@ -9,13 +10,13 @@ data(hh2019, package = "fect")
 
 out <- fect(nat_rate_ord ~ indirect,
             data = hh2019, index = c("bfs", "year"),
-            method = "ife", r = 2, force = "two-way",
-            se = TRUE, nboots = 200, parallel = FALSE)
+            method = "fe", force = "two-way",
+            se = TRUE, nboots = 500, parallel = FALSE)
 
 png("figures/fect-democracy.png", width = 8, height = 5.5,
     units = "in", res = 300)
 plot(out,
-     main  = "The Effect of Indirect Democracy",
+     main  = "The Effect of Indirect Democracy (Two-Way FE)",
      ylab  = "Effect on nat_rate_ord",
      xlab  = "Time Since the Treatment's Onset",
      stats = "none",
