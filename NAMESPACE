@@ -3,7 +3,7 @@ useDynLib(fect, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 importFrom("stats", "na.omit", "quantile", "sd", "var", "cov", "pchisq", "lm",
 "as.formula", "median", "pnorm", "predict", "qnorm", "reshape",
-"dnorm", "pf", "rbinom", "loess", "aggregate", "pt", "qt", "setNames", "time")
+"dnorm", "pf", "rbinom", "rnorm", "loess", "aggregate", "pt", "qt", "setNames", "time")
 importFrom("foreach","foreach","%dopar%")
 importFrom("parallel", "detectCores", "stopCluster", "makeCluster")
 importFrom("doRNG","registerDoRNG")

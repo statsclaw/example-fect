@@ -231,6 +231,49 @@ initialFit <- function(data, ## long form data
     return(result)
 }
 
+###################################
+## perturbed initial values for
+## multi-start robustness
+###################################
+
+perturbedFit <- function(Y0_base, beta0_base, Y, I, n_starts, seed = NULL) {
+    ## Generate n_starts perturbed initial values from a base fit.
+    ## Returns a list of lists, each with Y0 and beta0.
+    ## The first element is always the unperturbed base fit.
+    if (n_starts <= 1) {
+        return(list(list(Y0 = Y0_base, beta0 = beta0_base)))
+    }
+
+    results <- vector("list", n_starts)
+    results[[1]] <- list(Y0 = Y0_base, beta0 = beta0_base)
+
+    if (!is.null(seed)) set.seed(seed + 1000L)
+
+    ## Scale perturbation to the observed data spread
+    obs_vals <- Y[which(I == 1)]
+    sigma_Y <- sd(obs_vals, na.rm = TRUE)
+    if (!is.finite(sigma_Y) || sigma_Y < 1e-10) sigma_Y <- 1.0
+
+    for (s in 2:n_starts) {
+        ## Perturb Y0 with small Gaussian noise (5% of data SD)
+        noise <- matrix(rnorm(length(Y0_base), 0, 0.05 * sigma_Y),
+                        nrow = nrow(Y0_base), ncol = ncol(Y0_base))
+        Y0_pert <- Y0_base + noise
+
+        ## Perturb beta0 with small Gaussian noise (10% of coefficient magnitude)
+        if (length(beta0_base) > 0 && !all(beta0_base == 0)) {
+            beta_scale <- max(abs(beta0_base), 1e-3)
+            beta_noise <- matrix(rnorm(length(beta0_base), 0, 0.10 * beta_scale),
+                                 nrow = nrow(beta0_base), ncol = ncol(beta0_base))
+            beta0_pert <- beta0_base + beta_noise
+        } else {
+            beta0_pert <- beta0_base
+        }
+        results[[s]] <- list(Y0 = Y0_pert, beta0 = beta0_pert)
+    }
+    return(results)
+}
+
 ################################################
 ##  regressions for initial values, probit model  ##
 ################################################

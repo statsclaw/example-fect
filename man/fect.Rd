@@ -16,7 +16,7 @@ assumptions.}
             method = "fe",  se = FALSE, vartype = "bootstrap", cl = NULL,
             quantile.CI = FALSE, nboots = 200, alpha = 0.05,
             parallel = TRUE, cores = NULL, tol = 1e-3,
-            max.iteration = 1000, seed = NULL,
+            max.iteration = 1000, n.init = 1, seed = NULL,
             min.T0 = NULL, max.missing = NULL,
             proportion = 0.3, pre.periods = NULL,
             f.threshold = 0.5, tost.threshold = NULL,
@@ -74,6 +74,7 @@ assumptions.}
 \item{cores}{an integer indicating the number of cores for parallel computing.}
 \item{tol}{a positive number indicating the tolerance level for EM updates.}
 \item{max.iteration}{the maximal number of iterations for the EM algorithm.}
+\item{n.init}{an integer specifying the number of random initializations for the EM algorithm. When \code{n.init > 1}, the algorithm tries multiple perturbed starting values and selects the one with the lowest residual variance. Default is \code{1} (single deterministic initialization).}
 \item{seed}{an integer seed for random number generation.}
 \item{min.T0}{an integer specifying the minimum number of pre-treatment periods for each treated unit.}
 \item{max.missing}{an integer specifying the maximum number of missing observations allowed per unit.}

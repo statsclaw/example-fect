@@ -60,6 +60,7 @@ fect <- function(
     cores = NULL, # number of cores
     tol = 1e-3, # tolerance level
     max.iteration = 1000,
+    n.init = 1, # number of random initializations (1 = deterministic only)
     seed = NULL, # set seed
     min.T0 = NULL, # minimum T0
     max.missing = NULL, # maximum missing
@@ -134,6 +135,7 @@ fect.formula <- function(
     cores = NULL, # number of cores
     tol = 1e-3, # tolerance level
     max.iteration = 1000,
+    n.init = 1, # number of random initializations (1 = deterministic only)
     seed = NULL, # set seed
     min.T0 = NULL,
     max.missing = NULL,
@@ -240,6 +242,7 @@ fect.formula <- function(
         cores = cores,
         tol = tol,
         max.iteration = max.iteration,
+        n.init = n.init,
         seed = seed,
         min.T0 = min.T0,
         max.missing = max.missing,
@@ -316,6 +319,7 @@ fect.default <- function(
     cores = NULL, # number of cores
     tol = 1e-3, # tolerance level
     max.iteration = 1000,
+    n.init = 1, # number of random initializations (1 = deterministic only)
     seed = NULL, # set seed
     min.T0 = NULL,
     max.missing = NULL,
@@ -452,6 +456,12 @@ fect.default <- function(
             "\"force\" option misspecified; choose from c(\"none\", \"unit\", \"time\", \"two-way\")."
         )
     }
+
+    ## n.init validation
+    if (!is.numeric(n.init) || n.init < 1 || n.init != round(n.init)) {
+        stop("n.init must be a positive integer.")
+    }
+    n.init <- as.integer(n.init)
 
     ## binary
     if (binary == 1) {
@@ -2017,6 +2027,7 @@ fect.default <- function(
                     hasRevs = hasRevs,
                     tol = tol,
                     max.iteration = max.iteration,
+                    n.init = n.init,
                     norm.para = norm.para,
                     group.level = g.level,
                     group = G,

@@ -29,6 +29,7 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
                     hasRevs = 1,
                     tol, # tolerance level
                     max.iteration = 1000,
+                    n.init = 1, # number of random initializations
                     norm.para = NULL,
                     group.level = NULL,
                     group = NULL,
@@ -122,6 +123,21 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
     beta0 <- initialOut$beta0
     if (p > 0 && sum(is.na(beta0)) > 0) {
         beta0[which(is.na(beta0))] <- 0
+    }
+
+    ## ------------- multi-start initialization for robustness ---------- ##
+    if (n.init > 1) {
+        inits <- perturbedFit(Y0, beta0, YY, II, n.init, seed = NULL)
+        best_obj <- Inf
+        for (si in seq_along(inits)) {
+            trial <- inter_fe_ub(YY, inits[[si]]$Y0, X, II, W.use,
+                                 inits[[si]]$beta0, r, force, tol, max.iteration)
+            if (!is.null(trial$sigma2) && is.finite(trial$sigma2) && trial$sigma2 < best_obj) {
+                best_obj <- trial$sigma2
+                Y0 <- inits[[si]]$Y0
+                beta0 <- inits[[si]]$beta0
+            }
+        }
     }
 
     ## ------------- restrictions on candidate hyper parameters ---------- ##
@@ -429,6 +445,10 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
             CV.out.ife[, "r"] <- c(r.old:r.max)
             CV.out.ife[, "PC"] <- CV.out.ife[, "GMoment"] <- CV.out.ife[, "Moment"] <- CV.out.ife[, "MAD"] <- CV.out.ife[, "MSPE"] <- CV.out.ife[, "WMSPE"] <- CV.out.ife[, "GMSPE"] <- CV.out.ife[, "WGMSPE"] <- 1e20
 
+            ## Warm-start caches for CV loop
+            warm_fit_cv <- vector("list", k)
+            warm_fit_full <- NULL
+
             for (i in 1:dim(CV.out.ife)[1]) { ## cross-validation loop starts
                 ## inter FE based on control, before & after
                 r <- CV.out.ife[i, "r"]
@@ -448,11 +468,15 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
                         } else {
                             W.use2 <- as.matrix(0)
                         }
-                        est.cv.fit <- inter_fe_ub(
-                            YY.cv, as.matrix(Y0CV[, , ii]), X, II.cv,
+                        Y0_warm <- if (!is.null(warm_fit_cv[[ii]])) warm_fit_cv[[ii]] else as.matrix(Y0CV[, , ii])
+                        Y0_warm[which(II.cv == 0)] <- 0
+                        est.cv.out <- inter_fe_ub(
+                            YY.cv, Y0_warm, X, II.cv,
                             W.use2, as.matrix(beta0CV[, , ii]),
                             r, force, cv_tol, max.iteration
-                        )$fit
+                        )
+                        est.cv.fit <- est.cv.out$fit
+                        warm_fit_cv[[ii]] <- est.cv.fit
                         resid_ii <- YY[estCV[[ii]]] - est.cv.fit[estCV[[ii]]]
                         all_resid <- c(all_resid, resid_ii)
                         if (use_weight == 1) {
@@ -478,9 +502,10 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
                     gmoment <- scores["GMoment"]
                 }
 
+                Y0_warm_full <- if (!is.null(warm_fit_full)) warm_fit_full else Y0
                 est.cv <- inter_fe_ub(
                     YY,
-                    Y0,
+                    Y0_warm_full,
                     X,
                     II,
                     W.use,
@@ -490,6 +515,7 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
                     cv_tol,
                     max.iteration
                 ) ## overall
+                warm_fit_full <- est.cv$fit
                 sigma2 <- est.cv$sigma2
                 IC <- est.cv$IC
                 PC <- est.cv$PC
@@ -691,6 +717,9 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
 
             break_count <- 0
             break_check <- 0
+            ## Warm-start caches for MC CV loop
+            warm_fit_mc_cv <- vector("list", k)
+            warm_fit_mc_full <- NULL
             for (i in 1:length(lambda)) {
                 ## k <- 5
                 all_resid <- c()
@@ -707,11 +736,15 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
                     } else {
                         W.use2 <- as.matrix(0)
                     }
-                    est.cv.fit <- inter_fe_mc(
-                        YY.cv, as.matrix(Y0CV[, , ii]),
+                    Y0_mc_warm <- if (!is.null(warm_fit_mc_cv[[ii]])) warm_fit_mc_cv[[ii]] else as.matrix(Y0CV[, , ii])
+                    Y0_mc_warm[which(II.cv == 0)] <- 0
+                    est.mc.cv.out <- inter_fe_mc(
+                        YY.cv, Y0_mc_warm,
                         X, II.cv, W.use2, as.matrix(beta0CV[, , ii]),
                         1, lambda[i], force, cv_tol, max.iteration
-                    )$fit
+                    )
+                    est.cv.fit <- est.mc.cv.out$fit
+                    warm_fit_mc_cv[[ii]] <- est.cv.fit
                     resid_ii <- YY[estCV[[ii]]] - est.cv.fit[estCV[[ii]]]
                     all_resid <- c(all_resid, resid_ii)
                     if (use_weight == 1) {
@@ -736,11 +769,13 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
                 moment  <- scores["Moment"]
                 gmoment <- scores["GMoment"]
 
+                Y0_mc_warm_full <- if (!is.null(warm_fit_mc_full)) warm_fit_mc_full else Y0
                 est.cv <- inter_fe_mc(
-                    YY, Y0, X, II, W.use, beta0,
+                    YY, Y0_mc_warm_full, X, II, W.use, beta0,
                     1, lambda[i],
                     force, cv_tol, max.iteration
                 ) ## overall
+                warm_fit_mc_full <- est.cv$fit
 
                 eff.v.cv <- c(Y - est.cv$fit)[cv.pos]
                 meff <- as.numeric(tapply(eff.v.cv, t.on.cv, mean))
@@ -996,6 +1031,14 @@ fect_cv <- function(Y, # Outcome variable, (T*N) matrix
         message("\n")
     }
     validX <- est.best$validX
+
+    ## convergence diagnostic warning
+    if (!is.null(est.best$converged) && est.best$converged == 0) {
+        warning("EM algorithm did not converge within ", max.iteration,
+                " iterations. ",
+                "Consider increasing max.iteration or relaxing tol.",
+                call. = FALSE)
+    }
 
     ## ------------------------------##
     ## ----------- Summarize -------------- ##

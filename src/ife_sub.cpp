@@ -83,6 +83,7 @@ List fe_ad_iter(const arma::mat& Y, const arma::mat& Y0, const arma::mat& I, con
     xi = as<arma::mat>(Y_fe_ad["xi"]);
     result["xi"] = xi;
   }
+  result["converged"] = (dif <= tolerate) ? 1 : 0;
   return (result);
 }
 
@@ -186,6 +187,7 @@ List fe_ad_covar_iter(const arma::cube& XX, const arma::mat& xxinv, const arma::
     xi = as<arma::mat>(ife_inner["xi"]);
     result["xi"] = xi;
   }
+  result["converged"] = (dif <= tolerate) ? 1 : 0;
   return (result);
 }
 
@@ -289,7 +291,7 @@ List fe_ad_inter_iter(const arma::mat& Y, const arma::mat& Y0, const arma::mat& 
       stop_burnin = 1;
       dif = 1.0;
       niter = 0;
-      fit = Y0;
+      // Keep current fit as warm start for real phase instead of resetting to Y0
       fit_old = fit;
     }
   }
@@ -306,6 +308,7 @@ List fe_ad_inter_iter(const arma::mat& Y, const arma::mat& Y0, const arma::mat& 
   result["fit"] = fit;
   result["e"] = e;
   result["validF"] = validF;
+  result["converged"] = (dif <= tolerate) ? 1 : 0;
 
   if (force == 1 || force == 3) {
     alpha = as<arma::mat>(ife_inner["alpha"]);
@@ -472,7 +475,7 @@ List fe_ad_inter_covar_iter(const arma::cube& XX, const arma::mat& xxinv, const 
       stop_burnin = 1;
       dif = 1.0;
       niter = 0;
-      fit = Y0;
+      // Keep current fit as warm start for real phase instead of resetting to Y0
       fit_old = fit;
     }
   }
@@ -490,6 +493,7 @@ List fe_ad_inter_covar_iter(const arma::cube& XX, const arma::mat& xxinv, const 
   result["beta"] = beta;
   result["fit"] = fit;
   result["validF"] = validF;
+  result["converged"] = (dif <= tolerate) ? 1 : 0;
 
   if (force == 1 || force == 3) {
     alpha = as<arma::mat>(ife_inner["alpha"]);
@@ -573,5 +577,6 @@ List beta_iter(const arma::cube& X, const arma::mat& xxinv, const arma::mat& Y, 
   result["lambda"] = L;
   result["factor"] = F;
   result["VNT"] = VNT;
+  result["converged"] = (beta_norm <= tolerate) ? 1 : 0;
   return (result);
 }

@@ -23,6 +23,18 @@ factor models, and the matrix completion method.
 Starting from v.2.0.0, all **gsynth** functionalities have been merged
 into **fect**.
 
+### Example: The Effect of Indirect Democracy
+
+![Democracy Effect](figures/fect-democracy.png)
+
+*ATT estimates with 95% CI bands. Pre-treatment placebo (grey) is centered around zero; post-treatment effect (blue) shows a significant positive impact. Golden bars indicate sample sizes at each relative time period.*
+
+### EM Convergence Improvement (v2.2.0)
+
+![Convergence Fix](figures/fect-convergence.png)
+
+*Component-wise convergence monitoring improves accuracy by 43–2,249× without speed regression. Fully backward-compatible at default settings.*
+
 **Source Code:** [GitHub](https://github.com/xuyiqing/fect)
 
 **User Manual:** [Quarto Book](https://yiqingxu.org/packages/fect/)

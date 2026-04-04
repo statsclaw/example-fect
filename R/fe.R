@@ -157,6 +157,14 @@ fect_fe <- function(Y, # Outcome variable, (T*N) matrix
     }
 
     validX <- est.best$validX
+
+    ## convergence diagnostic warning
+    if (!is.null(est.best$converged) && est.best$converged == 0) {
+        warning("EM algorithm did not converge within ", max.iteration,
+                " iterations. ",
+                "Consider increasing max.iteration or relaxing tol.",
+                call. = FALSE)
+    }
     validF <- ifelse(r.cv > 0, 1, 0)
 
     ## ------------------------------##
